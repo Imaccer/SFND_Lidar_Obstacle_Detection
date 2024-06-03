@@ -72,6 +72,7 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
         while(maxIterations--) {
            // randomly pick 2 points to create line from
            std::unordered_set<int> inliers; // to hold samples inliers calculated this iteration
+
            while(inliers.size() < 2 ) {
              inliers.insert(rand()%(cloud->points.size())); // way of generating random number within range of number of points. This randomly selects 2 points to initially insert to inliers
            }
@@ -102,6 +103,7 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
 
               float d = fabs(a*x3+b*y3+c)/sqrt(a*a+b*b);// calc perp distance to line from point
 
+	          // If distance is smaller than threshold count it as inlier
               if(d <= distanceTol)
                   inliers.insert(index);// insert point if w/in tol
 
@@ -113,13 +115,9 @@ std::unordered_set<int> Ransac(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int ma
         }
         }
 
-	// Randomly sample subset and fit line
 
-	// Measure distance between every point and fitted line
-	// If distance is smaller than threshold count it as inlier
 
 	// Return indicies of inliers from fitted line with most inliers
-	
 	return inliersResult;
 
 }
@@ -172,6 +170,7 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
               // float d = fabs(a*x3+b*y3+c)/sqrt(a*a+b*b);// calc perp distance to line from point
               float dist = fabs(a*x4 + b*y4 + c*z4 + d)/sqrt(a*a + b*b + c*c);
 
+	          // If distance is smaller than threshold count it as inlier
               if(dist <= distanceTol)
                   inliers.insert(index);// insert point if w/in tol
 
@@ -183,15 +182,8 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
         }
         }
 
-	// Randomly sample subset and fit line
-
-	// Measure distance between every point and fitted line
-	// If distance is smaller than threshold count it as inlier
-
 	// Return indicies of inliers from fitted line with most inliers
-	
 	return inliersResult;
-
 
 }
 
