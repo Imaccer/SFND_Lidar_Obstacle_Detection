@@ -53,12 +53,23 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
 //   std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlanePCL(filterCloud, 50, 0.3);
   std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 200, 0.3);
 
-  renderPointCloud(viewer, segmentCloud.second, "segmentCloud");
+  renderPointCloud(viewer, segmentCloud.second, "segmentCloud", Color(0,1,0));
 
-  	// pcl::KdTree* tree = new pcl::KdTree;
+	KdTree* tree = new KdTree;
   
-    // for (int i=0; i<segmentCloud.first.size(); i++) 
+    for (int i = 0; i < segmentCloud.first->points.size(); ++i) {
+        std::vector<float> point = {segmentCloud.first->points[i].x, segmentCloud.first->points[i].y, segmentCloud.first->points[i].z};
+        tree->insert(point, i);
+    }
+
+	// std::vector<std::vector<int>> cloudClusters = pointProcessorI->euclideanCluster(points, tree, 3.0);
+
+    // for (int i=0; i<segmentCloud.first->size(); i++) 
     // 	tree->insert(segmentCloud.first[i],i); 
+//   pcl::KdTreeFLANN<pcl::PointXYZI>* tree;
+  
+//     for (int i=0; i<segmentCloud.first.size(); i++) 
+//     	tree->insert(segmentCloud.first[i],i); 
 
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, .53, 15, 500);
 	
