@@ -2,12 +2,14 @@
 // Create simple 3d highway enviroment using PCL
 // for exploring self-driving car sensors
 
+
+
 #include "sensors/lidar.h"
 #include "render/render.h"
 #include "processPointClouds.h"
+
 // using templates for processPointClouds so also include .cpp to help linker
 #include "processPointClouds.cpp"
-
 std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
 
@@ -34,23 +36,54 @@ std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer
     return cars;
 }
 
+
+std::vector<std::vector<float>> convertPointCloudToVector(pcl::PointCloud<pcl::PointXYZI>::Ptr cloud) {
+    std::vector<std::vector<float>> points;
+
+    // Iterate over each point in the point cloud
+    for (const auto& point : *cloud) {
+        // Extract x, y, z coordinates from the point
+        float x = point.x;
+        float y = point.y;
+        float z = point.z;
+
+        // Create a std::vector<float> for the point and push it into the points vector
+        points.push_back({x, y, z});
+    }
+
+    return points;
+}
+
+std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> convertToPointClouds(
+    const std::vector<std::vector<int>>& clusters, 
+    const pcl::PointCloud<pcl::PointXYZI>::Ptr inputPoints) {
+
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> pointClouds;
+
+    for (const auto& cluster : clusters) {
+        pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
+
+        for (int index : cluster) {
+           //  cloud->points.push_back(points[index]);
+             cloud->points.push_back(inputPoints->points[index]);
+        }
+
+        cloud->width = cloud->points.size();
+        cloud->height = 1;  // Unorganized point cloud
+        cloud->is_dense = true;
+
+        pointClouds.push_back(cloud);
+    }
+
+    return pointClouds;
+}
+
 void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointClouds<pcl::PointXYZI>* pointProcessorI, const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud)
 {
-  // ----------------------------------------------------
-  // -----Open 3D viewer and display City Block     -----
-  // ----------------------------------------------------
-
-//   ProcessPointClouds<pcl::PointXYZI>* pointProcessorI = new ProcessPointClouds<pcl::PointXYZI>();
-//   pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud = pointProcessorI->loadPcd("../src/sensors/data/pcd/data_1/0000000000.pcd");
-//   renderPointCloud(viewer, inputCloud, "inputCloud");
   Eigen::Vector4f minPoint(-10, -5, -2, 1);  // 10 meters to the left, 5 meters back, 2 meter down from the origin
   Eigen::Vector4f maxPoint(30, 8, 1, 1);     // 8 meters to the right, 30 meters forward, 1 meter up from the origin
 
   auto filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.2f, minPoint, maxPoint);
- // renderPointCloud(viewer, filterCloud, "filterCloud");
-  
-  //std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 25, 0.3);
-//   std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlanePCL(filterCloud, 50, 0.3);
   std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 200, 0.3);
 
   renderPointCloud(viewer, segmentCloud.second, "segmentCloud", Color(0,1,0));
@@ -62,14 +95,39 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
         tree->insert(point, i);
     }
 
-	// std::vector<std::vector<int>> cloudClusters = pointProcessorI->euclideanCluster(points, tree, 3.0);
-
-    // for (int i=0; i<segmentCloud.first->size(); i++) 
-    // 	tree->insert(segmentCloud.first[i],i); 
-//   pcl::KdTreeFLANN<pcl::PointXYZI>* tree;
+    std::vector<std::vector<int>> clusters = pointProcessorI->euclideanClustering(convertPointCloudToVector(segmentCloud.first),tree, .53);
+	std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = convertToPointClouds(clusters, segmentCloud.first);
+    
+    int clusterId = 0;
+    std::vector<Color> colors = {Color(1,0,0), Color(0,1,0), Color(0,0,1)};
   
-//     for (int i=0; i<segmentCloud.first.size(); i++) 
-//     	tree->insert(segmentCloud.first[i],i); 
+    for(pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudClusters)
+    {
+      	std::cout << "cluster size ";
+      	pointProcessorI->numPoints(cluster);
+      	renderPointCloud(viewer,cluster,"obstCloud"+std::to_string(clusterId),colors[clusterId]);
+        Box box = pointProcessorI->BoundingBox(cluster);
+        renderBox(viewer,box,clusterId);
+      	++clusterId;
+    }
+}
+ 
+void cityBlockPCL(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointClouds<pcl::PointXYZI>* pointProcessorI, const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud)
+{
+  Eigen::Vector4f minPoint(-10, -5, -2, 1);  // 10 meters to the left, 5 meters back, 2 meter down from the origin
+  Eigen::Vector4f maxPoint(30, 8, 1, 1);     // 8 meters to the right, 30 meters forward, 1 meter up from the origin
+
+  auto filterCloud = pointProcessorI->FilterCloud(inputCloud, 0.2f, minPoint, maxPoint);
+  std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessorI->SegmentPlane(filterCloud, 200, 0.3);
+
+  renderPointCloud(viewer, segmentCloud.second, "segmentCloud", Color(0,1,0));
+
+	KdTree* tree = new KdTree;
+  
+    for (int i = 0; i < segmentCloud.first->points.size(); ++i) {
+        std::vector<float> point = {segmentCloud.first->points[i].x, segmentCloud.first->points[i].y, segmentCloud.first->points[i].z};
+        tree->insert(point, i);
+    }
 
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessorI->Clustering(segmentCloud.first, .53, 15, 500);
 	
@@ -86,7 +144,7 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
       	++clusterId;
     }
 }
-
+ 
 void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
     // ----------------------------------------------------
