@@ -249,6 +249,45 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     return segResult;
 }
 
+template<typename PointT>
+void ProcessPointClouds<PointT>::clusterHelper(int indice, const std::vector<std::vector<float>>& points, std::vector<int>& cluster, \
+std::vector<bool>& processed, KdTree* tree, float distanceTol) {
+	processed[indice] = true;
+	cluster.push_back(indice);
+
+	std::vector<int> nearest = tree->search(points[indice], distanceTol);
+
+	for(int id : nearest) {
+		if(!processed[id]){
+			clusterHelper(id, points, cluster, processed, tree, distanceTol);
+		}
+	}
+}
+
+template<typename PointT>
+std::vector<std::vector<int>> ProcessPointClouds<PointT>::euclideanClustering(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
+{
+
+	std::vector<std::vector<int>> clusters;
+	std::vector<bool> processed(points.size(), false);
+
+	int i = 0;
+
+	while (i < points.size()) {
+		if(processed[i]) {
+			i++;
+			continue;
+		}
+
+		std::vector<int> cluster;
+		clusterHelper(i, points, cluster, processed, tree, distanceTol);// recursive, will fill cluster. Proximity fn in notes.
+		clusters.push_back(cluster);
+		i++;
+	}
+ 
+	return clusters;
+}
+
 
 template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
