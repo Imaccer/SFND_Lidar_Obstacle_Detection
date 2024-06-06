@@ -44,7 +44,7 @@ struct KdTree
 		else
 		{
 			// Calculate current dim
-			uint cd = depth % 2;// 0 for even (x split), 1 for odd (y split)
+			uint cd = depth % 3;// 0 for even (x split), 1 for odd (y split)
 
 			if (point[cd] < ((*node)->point[cd])) // will select x-component to compare for even, y-component cd is odd
 				insertHelper(&((*node)->left), depth+1, point, id);
@@ -69,21 +69,23 @@ struct KdTree
 		{
 			// check if in target box range
 			if((node->point[0] >= (target[0]- distanceTol)) && (node->point[0] <= (target[0] + distanceTol)) \
-			&& (node->point[1] >= (target[1] - distanceTol)) && (node->point[1] <= (target[1] + distanceTol)))
+			&& (node->point[1] >= (target[1] - distanceTol)) && (node->point[1] <= (target[1] + distanceTol)) \
+			&& (node->point[2] >= (target[2] - distanceTol)) && (node->point[2] <= (target[2] + distanceTol)))
 			{
 				float distance = sqrt(((node->point[0]-target[0])*(node->point[0]-target[0])) \
-				+ ((node->point[1]-target[1])*(node->point[1]-target[1])));
+				+ ((node->point[1]-target[1])*(node->point[1]-target[1]))
+				+ ((node->point[2]-target[2])*(node->point[2]-target[2])));
 				if (distance <= distanceTol)
 					ids.push_back(node->id);
 			}
 
 			// in outside target box, determine left or right child node
 			// depending on depth even or odd, check x or y coords to determine branch direction
-			if((target[depth%2]-distanceTol) < node->point[depth%2])
+			if((target[depth%3]-distanceTol) < node->point[depth%3])
 			{
 				searchHelper(target, node->left, depth+1, distanceTol, ids);
 			}
-          	if((target[depth%2]+distanceTol) > node->point[depth%2])
+          	if((target[depth%3]+distanceTol) > node->point[depth%3])
 			{	
 				searchHelper(target, node->right, depth+1, distanceTol, ids);
 			}
