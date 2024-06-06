@@ -138,9 +138,9 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 template<typename PointT>
 std::unordered_set<int> ProcessPointClouds<PointT>::RansacPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol){
         std::unordered_set<int> inliersResult;// for holding best inliers 
-	srand(time(NULL));
+	    srand(time(NULL));
 	
-	// For max iterations 
+	    // For max iterations 
         while(maxIterations--) {
            // randomly pick 3 points to create line from
            std::unordered_set<int> inliers; // to hold samples inliers calculated this iteration
@@ -207,12 +207,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 {
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
-	//pcl::PointIndices::Ptr inliers;
     // TODO:: Fill in this function to find inliers for the cloud.
-    // Create segmentation object
-    // pcl::SACSegmentation<PointT> seg;
-    // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
-    // pcl::PointIndices::Ptr inliers (new pcl::PointIndices());
 
 	std::unordered_set<int> inliers = RansacPlane(cloud, maxIterations, distanceThreshold);
     // Convert std::unordered_set<int> to pcl::PointIndices::Ptr
@@ -221,20 +216,6 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     for (int index : inliers) {
         inliersPtr->indices.push_back(index);
     }
-//	pcl::PointCloud<pcl::PointXYZ>::Ptr  cloudInliers(new pcl::PointCloud<pcl::PointXYZ>());
-//	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudOutliers(new pcl::PointCloud<pcl::PointXYZ>());
-
-	// typename pcl::PointCloud<PointT>::Ptr  cloudInliers(new pcl::PointCloud<PointT>());
-	// typename pcl::PointCloud<PointT>::Ptr cloudOutliers(new pcl::PointCloud<PointT>());
-
-	// for(int index = 0; index < cloud->points.size(); index++)
-	// {
-	// 	PointT point = cloud->points[index];
-	// 	if(inliers.count(index))
-	// 		cloudInliers->points.push_back(point);
-	// 	else
-	// 		cloudOutliers->points.push_back(point);
-	// }
 
     if (inliersPtr->indices.size() == 0) {
     // if (inliers.size() == 0) {
