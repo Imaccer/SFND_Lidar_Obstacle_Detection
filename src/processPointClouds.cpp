@@ -231,38 +231,40 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 }
 
 template<typename PointT>
-void ProcessPointClouds<PointT>::clusterHelper(int indice, const std::vector<std::vector<float>>& points, std::vector<int>& cluster, \
-std::vector<bool>& processed, KdTree* tree, float distanceTol) {
+void ProcessPointClouds<PointT>::clusterHelper(int indice, typename pcl::PointCloud<PointT>::Ptr cloud, typename pcl::PointCloud<PointT>::Ptr cluster, \
+std::vector<bool>& processed, KdTree<PointT>* tree, float distanceTol) {
 	processed[indice] = true;
-	cluster.push_back(indice);
+	cluster->points.push_back(cloud->points[indice]);
 
-	std::vector<int> nearest = tree->search(points[indice], distanceTol);
+	std::vector<int> nearest = tree->search(cloud->points[indice], distanceTol);
 
 	for(int id : nearest) {
 		if(!processed[id]){
-			clusterHelper(id, points, cluster, processed, tree, distanceTol);
+			clusterHelper(id, cloud, cluster, processed, tree, distanceTol);
 		}
 	}
 }
 
 template<typename PointT>
-std::vector<std::vector<int>> ProcessPointClouds<PointT>::euclideanClustering(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol, int minSize, int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::euclideanClustering(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree<PointT>* tree, float distanceTol, int minSize, int maxSize)
 {
 
-	std::vector<std::vector<int>> clusters;
-	std::vector<bool> processed(points.size(), false);
+	// std::vector<std::vector<int>> clusters;
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
+	std::vector<bool> processed(cloud->points.size(), false);
 
 	int i = 0;
 
-	while (i < points.size()) {
+	while (i < cloud->points.size()) {
 		if(processed[i]) {
 			i++;
 			continue;
 		}
 
-		std::vector<int> cluster;
-		clusterHelper(i, points, cluster, processed, tree, distanceTol);// recursive, will fill cluster. Proximity fn in notes.
-        if ((cluster.size() > minSize) && (cluster.size() <= maxSize)) { 
+		// std::vector<int> cluster;
+        typename pcl::PointCloud<PointT>::Ptr cluster(new pcl::PointCloud<PointT>);
+		clusterHelper(i, cloud, cluster, processed, tree, distanceTol);// recursive, will fill cluster. Proximity fn in notes.
+        if ((cluster->points.size() >= minSize) && (cluster->points.size() <= maxSize)) { 
 		clusters.push_back(cluster);
         }
 		i++;
