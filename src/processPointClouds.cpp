@@ -246,7 +246,7 @@ std::vector<bool>& processed, KdTree* tree, float distanceTol) {
 }
 
 template<typename PointT>
-std::vector<std::vector<int>> ProcessPointClouds<PointT>::euclideanClustering(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
+std::vector<std::vector<int>> ProcessPointClouds<PointT>::euclideanClustering(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol, int minSize, int maxSize)
 {
 
 	std::vector<std::vector<int>> clusters;
@@ -262,7 +262,9 @@ std::vector<std::vector<int>> ProcessPointClouds<PointT>::euclideanClustering(co
 
 		std::vector<int> cluster;
 		clusterHelper(i, points, cluster, processed, tree, distanceTol);// recursive, will fill cluster. Proximity fn in notes.
+        if ((cluster.size() > minSize) && (cluster.size() <= maxSize)) { 
 		clusters.push_back(cluster);
+        }
 		i++;
 	}
  

@@ -96,7 +96,8 @@ void cityBlock(pcl::visualization::PCLVisualizer::Ptr& viewer, ProcessPointCloud
         tree->insert(point, i);
     }
 
-    std::vector<std::vector<int>> clusters = pointProcessorI->euclideanClustering(convertPointCloudToVector(segmentCloud.first),tree, .53);
+    //std::vector<std::vector<int>> clusters = pointProcessorI->euclideanClustering(convertPointCloudToVector(segmentCloud.first),tree, .53);
+    std::vector<std::vector<int>> clusters = pointProcessorI->euclideanClustering(convertPointCloudToVector(segmentCloud.first),tree, .53, 15, 500);
 	std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = convertToPointClouds(clusters, segmentCloud.first);
     
     int clusterId = 0;
